@@ -1,9 +1,13 @@
-import java.io.*;
+import ui.EditorUI;
+
+import javax.swing.*;
 
 public class Main {
 
     public static void main(String[] args) {
-
-        System.out.println("Sistema de autocompletado y correccion");
+        SwingUtilities.invokeLater(() -> {
+            EditorUI ui = new EditorUI();
+            ui.setVisible(true);
+        });
     }
 }
