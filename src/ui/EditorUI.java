@@ -129,14 +129,22 @@ public class EditorUI extends JFrame {
         } else {
             statusLabel.setText("Palabra no encontrada: " + ultimaPalabra);
 
-            // Placeholder visual mientras se implementa SuggestionEngine
-            /*JButton sugerenciaTemporal = new JButton(ultimaPalabra);
-            sugerenciaTemporal.setFocusPainted(false);
-            sugerenciaTemporal.addActionListener(e ->
-                    statusLabel.setText("Seleccionaste: " + ultimaPalabra)
-            );
+            java.util.List<String> sugerencias = suggestionEngine.getSuggestions(ultimaPalabra);
 
-            suggestionsPanel.add(sugerenciaTemporal);*/
+            if (sugerencias.isEmpty()) {
+                statusLabel.setText("No se encontraron sugerencias para: " + ultimaPalabra);
+            } else {
+                for (String sugerencia : sugerencias) {
+                    JButton botonSugerencia = new JButton(sugerencia);
+                    botonSugerencia.setFocusPainted(false);
+
+                    botonSugerencia.addActionListener(e -> {
+                        statusLabel.setText("Seleccionaste: " + sugerencia);
+                    });
+
+                    suggestionsPanel.add(botonSugerencia);
+                }
+            }
         }
 
         suggestionsPanel.revalidate();
