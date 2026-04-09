@@ -1,5 +1,9 @@
 package ui;
 
+import dictionary.DictionaryLoader;
+import spell.SpellChecker;
+import spell.SuggestionEngine;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -16,7 +20,7 @@ public class EditorUI extends JFrame {
     // Etiqueta de estado para mostrar mensajes al usuario sobre la acción realizada
     private final JLabel statusLabel;
 
-    public EditorUI() {
+    public EditorUI(SpellChecker spellChecker, SuggestionEngine suggestionEngine) {
 
         // Configuración básica de la ventana principal
         setTitle("Autocompletado y Corrección Ortográfica");

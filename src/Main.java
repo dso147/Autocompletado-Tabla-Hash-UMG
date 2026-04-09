@@ -1,22 +1,23 @@
 import dictionary.DictionaryLoader;
-//import ui.EditorUI;
+import spell.SpellChecker;
+import spell.SuggestionEngine;
+import ui.EditorUI;
 
-//import javax.swing.*;
+import javax.swing.*;
 
 public class Main {
 
     public static void main(String[] args) {
-        /*SwingUtilities.invokeLater(() -> {
-            EditorUI ui = new EditorUI();
-            ui.setVisible(true);
-        });*/
-        /*HashMap<String, Boolean> diccionario =
-                DictionaryLoader.cargarDiccionario();*/
-        /*DictionaryLoader diccionario = new DictionaryLoader();
-        dic.cargarDiccionario();*/
         DictionaryLoader diccionario = new DictionaryLoader("src/resources/spanish.dic");
         diccionario.cargaDiccionario();
-        System.out.println("¿Existe casa? " + diccionario.containsKey("casa"));
+
+        SpellChecker spellChecker = new SpellChecker(diccionario);
+        SuggestionEngine suggestionEngine = new SuggestionEngine(spellChecker, diccionario);
+
+        SwingUtilities.invokeLater(() -> {
+            EditorUI ui = new EditorUI(spellChecker, suggestionEngine);
+            ui.setVisible(true);
+        });
     }
     
 }
