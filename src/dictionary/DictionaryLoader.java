@@ -6,12 +6,20 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class DictionaryLoader {
-    public static HashMap<String, Boolean> cargarDiccionario(String ruta) {
-        HashMap<String, Boolean> diccionario = new HashMap<>();
 
+    private String ruta;
+    private HashMap<String, Boolean> diccionario;
+
+    public DictionaryLoader(String route) {
+        this.ruta = route;
+    }
+
+    public void cargaDiccionario() {
+        diccionario = new HashMap<>();
+
+        // si falla en la lectura, cierra el archivo automaticamente
+        // por eso esta en un try el buffer reader
         try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
-            br.readLine(); // omitir primera línea
-
             String palabra;
             while ((palabra = br.readLine()) != null) {
                 palabra = palabra.trim().toLowerCase();
@@ -25,10 +33,14 @@ public class DictionaryLoader {
             System.out.println("Total de palabras: " + diccionario.size());
 
         } catch (IOException e) {
-            System.out.println("Error al cargar el archivo");
-            e.printStackTrace();
+            System.out.println("Error al cargar el archivo - NPE");
         }
+    }
 
-        return diccionario;
+    public boolean containsKey(String palabra) {
+        if (diccionario == null) {
+            throw new IllegalStateException("El diccionario no ha sido cargado. Llama a cargaDiccionario() primero.");
+        }
+        return diccionario.containsKey(palabra.toLowerCase());
     }
 }

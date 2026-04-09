@@ -1,5 +1,4 @@
 import dictionary.DictionaryLoader;
-import java.util.HashMap;
 //import ui.EditorUI;
 
 //import javax.swing.*;
@@ -15,9 +14,8 @@ public class Main {
                 DictionaryLoader.cargarDiccionario();*/
         /*DictionaryLoader diccionario = new DictionaryLoader();
         dic.cargarDiccionario();*/
-        HashMap<String, Boolean> diccionario =
-                DictionaryLoader.cargarDiccionario("resources/spanish.dic");
-
+        DictionaryLoader diccionario = new DictionaryLoader("src/resources/spanish.dic");
+        diccionario.cargaDiccionario();
         System.out.println("¿Existe casa? " + diccionario.containsKey("casa"));
     }
     
