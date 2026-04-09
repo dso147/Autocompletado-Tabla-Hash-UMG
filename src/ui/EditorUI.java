@@ -1,6 +1,5 @@
 package ui;
 
-import dictionary.DictionaryLoader;
 import spell.SpellChecker;
 import spell.SuggestionEngine;
 
@@ -12,16 +11,27 @@ import java.awt.*;
 public class EditorUI extends JFrame {
 
     // Área donde el usuario escribe el texto
-    private final JTextArea textArea;
+    private JTextArea textArea;
 
     // Panel donde se mostrarán las sugerencias (botones dinámicos)
-    private final JPanel suggestionsPanel;
+    private JPanel suggestionsPanel;
 
     // Etiqueta de estado para mostrar mensajes al usuario sobre la acción realizada
-    private final JLabel statusLabel;
+    private JLabel statusLabel;
+
+    private SpellChecker spellChecker;
+    private SuggestionEngine suggestionEngine;
+
+    private Timer debounceTimer;
 
     public EditorUI(SpellChecker spellChecker, SuggestionEngine suggestionEngine) {
+        this.spellChecker = spellChecker;
+        this.suggestionEngine = suggestionEngine;
 
+        loadPanel();
+    }
+
+    private void loadPanel() {
         // Configuración básica de la ventana principal
         setTitle("Autocompletado y Corrección Ortográfica");
         setSize(800, 550);
@@ -68,51 +78,85 @@ public class EditorUI extends JFrame {
 
         mainPanel.add(bottomPanel, BorderLayout.SOUTH); // Se agrega al panel principal la sección de sugerencias y estado
 
-        // Agrega botones de ejemplo
-        addMockSuggestionButtons();
+        // procesamiento de palabra con debounce para evitar procesar cada letra escrita, se espera a que el usuario deje de escribir por 300ms
+        debounceTimer = new Timer(500, e -> procesarTextoUsuario());
+        debounceTimer.setRepeats(false);
 
         // Evento para detectar cambios en el texto, va a simular el estado de escritura del usuario
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             // Se ejecuta cuando el usuario escribe
             @Override
             public void insertUpdate(DocumentEvent e) {
-                statusLabel.setText("Escribiendo...");
+                updateTextStatusLabel("Escribiendo...");
             }
 
             // Se ejecuta cuando borra texto
             @Override
             public void removeUpdate(DocumentEvent e) {
-                statusLabel.setText("Editando texto...");
+                updateTextStatusLabel("Editando texto...");
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                // No se usa para JTextArea, pero es necesario implementarlo
+                updateTextStatusLabel("Actualizando...");
             }
         });
     }
 
-    /**
-     * Método temporal para simular sugerencias
-     */
-    private void addMockSuggestionButtons() {
+    private void updateTextStatusLabel(String mensaje) {
+        statusLabel.setText(mensaje);
+        debounceTimer.restart();
+    }
 
-        // Ejemplos de sugerencias
-        String[] ejemplos = {"Hola", "Holanda", "Cómo", "Comida", "Comedor"};
+    private void procesarTextoUsuario() {
+        String texto = textArea.getText();
+        String ultimaPalabra = obtenerUltimaPalabra(texto);
 
-        for (String texto : ejemplos) {
+        System.out.println("Texto: " + texto);
+        System.out.println("Palabra: " + ultimaPalabra);
 
-            // Crear botón por cada sugerencia
-            JButton button = new JButton(texto);
-            button.setFocusPainted(false);
+        limpiarSugerencias();
 
-            // Acción click en boton simulado, muestra el cambio en el campo de estado
-            button.addActionListener(e ->
-                    statusLabel.setText("Seleccionaste: " + texto)
+        if (ultimaPalabra.isEmpty()) {
+            statusLabel.setText("Escribe una palabra...");
+            return;
+        }
+
+        boolean palabraCorrecta = spellChecker.isCorrect(ultimaPalabra);
+
+        if (palabraCorrecta) {
+            statusLabel.setText("Palabra correcta: " + ultimaPalabra);
+        } else {
+            statusLabel.setText("Palabra no encontrada: " + ultimaPalabra);
+
+            // Placeholder visual mientras se implementa SuggestionEngine
+            /*JButton sugerenciaTemporal = new JButton(ultimaPalabra);
+            sugerenciaTemporal.setFocusPainted(false);
+            sugerenciaTemporal.addActionListener(e ->
+                    statusLabel.setText("Seleccionaste: " + ultimaPalabra)
             );
 
-            // Agregar botón al panel de sugerencias
-            suggestionsPanel.add(button);
+            suggestionsPanel.add(sugerenciaTemporal);*/
         }
+
+        suggestionsPanel.revalidate();
+        suggestionsPanel.repaint();
+    }
+
+    private String obtenerUltimaPalabra(String texto) {
+        if (texto == null || texto.trim().isEmpty()) {
+            return "";
+        }
+
+        String textoLimpio = texto.trim();
+        String[] palabras = textoLimpio.split("\\s+");
+
+        return palabras[palabras.length - 1];
+    }
+
+    private void limpiarSugerencias() {
+        suggestionsPanel.removeAll();
+        suggestionsPanel.revalidate();
+        suggestionsPanel.repaint();
     }
 }
