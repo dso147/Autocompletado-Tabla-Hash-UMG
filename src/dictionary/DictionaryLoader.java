@@ -33,7 +33,7 @@ public class DictionaryLoader {
             System.out.println("Total de palabras: " + diccionario.size());
 
         } catch (IOException e) {
-            System.out.println("Error al cargar el archivo - NPE");
+            System.out.println("Error al cargar el archivo: " + e.getMessage());
         }
     }
 
@@ -41,6 +41,6 @@ public class DictionaryLoader {
         if (diccionario == null) {
             throw new IllegalStateException("El diccionario no ha sido cargado. Llama a cargaDiccionario() primero.");
         }
-        return diccionario.containsKey(palabra.toLowerCase());
+        return diccionario.containsKey(palabra.trim().toLowerCase());
     }
 }
