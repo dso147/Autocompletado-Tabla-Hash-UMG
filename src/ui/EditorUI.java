@@ -25,15 +25,18 @@ public class EditorUI extends JFrame {
 
     private Timer debounceTimer;
 
-    //CAMBIOS PARA NAVEGACION TAB !!!!!
+    //popup emergente
     private JPopupMenu suggestionsPopup;
+    //Lista visual que contiene las sugerencias en el popup
     private JList<String> suggestionsList;
+    //modelo de datos que almacena las sugerencias de forma dinamica
     private DefaultListModel<String> listModel;
-
+    //constructor de la clase EditorUI
+    //recibe el corrector ortografico y el motor de sugerencias como dependencias
     public EditorUI(SpellChecker spellChecker, SuggestionEngine suggestionEngine) {
         this.spellChecker = spellChecker;
         this.suggestionEngine = suggestionEngine;
-
+        //se inicializa toda la interfaz grafica
         loadPanel();
     }
 
@@ -109,14 +112,19 @@ public class EditorUI extends JFrame {
             }
         });
 
-        //CAMBIOS PARA EL TAB
+        //se inicializa el modelo de datos para las sugerencias
         listModel = new DefaultListModel<>();
+        //se crea la lista visual
         suggestionsList = new JList<>(listModel);
+        //se permite seleccionar solo un elemento a l vez
         suggestionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        //fuente de texto de la lista 
         suggestionsList.setFont(new Font("SansSerif", Font.PLAIN, 16));
-
+        //se crea el popop
         suggestionsPopup = new JPopupMenu();
+        //se define el borde gris
         suggestionsPopup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        //se agrega la lista dentro del popop con scroll
         suggestionsPopup.add(new JScrollPane(suggestionsList));
 
         // ATAJOS DE TECLADO
@@ -204,17 +212,20 @@ public class EditorUI extends JFrame {
         }
 
         boolean palabraCorrecta = spellChecker.isCorrect(ultimaPalabra);
-
+        //Si la palabra no es correcta segun el diccionario
         if (!palabraCorrecta) {
+            //se obtienen las sugerencias
             java.util.List<String> sugerencias = suggestionEngine.getSuggestions(ultimaPalabra);
-
+            //si existen sugerencuas, se muestran en el popup
             if (!sugerencias.isEmpty()) {
                 statusLabel.setText("Sugerencias para: " + ultimaPalabra); //MEJORA-TAB: Solo se agrega la alerta, no hace nada realmente.
                 mostrarPopup(sugerencias);
+            //si no hay, se oculta el popup
             } else {
                 statusLabel.setText("No se encontraron sugerencias para: " + ultimaPalabra); //MEJORA-TAB: Solo se agrega la alerta, no hace nada realmente.
                 suggestionsPopup.setVisible(false);
             }
+            //si la palabra es correcta, se oculta el popup
         } else {
             statusLabel.setText("Palabra correcta: " + ultimaPalabra);
             suggestionsPopup.setVisible(false);
@@ -244,11 +255,11 @@ public class EditorUI extends JFrame {
         suggestionsPanel.repaint();
     }
 
-    //CAMBIOS PARA EL TAB
-
+    //se muestra el popup con las sugerencias
     private void mostrarPopup(java.util.List<String> sugerencias) {
+        //se limpia
         listModel.clear();
-
+        //se agregan las nuevas sugerencias
         for (String s : sugerencias) {
             listModel.addElement(s);
         }
@@ -271,30 +282,37 @@ public class EditorUI extends JFrame {
         }
     }
 
+    //reemplaza la ultima palabra por la sugerencia
     private void reemplazarUltimaPalabra(String nuevaPalabra) {
+        //se obtiene todo el texto del area escrita
         String texto = textArea.getText();
-
+        
         if (texto.trim().isEmpty()) return;
-
+        //se busca la ultima posicion de un espacio
         int lastSpace = texto.lastIndexOf(" ");
-
+        
         String nuevoTexto;
-
+        //si no hay espacio se reemplaza todo el texto
         if (lastSpace == -1) {
             nuevoTexto = nuevaPalabra;
         } else {
+            //se conserva el texto anterior y se reemplaza solo la ultima palabra
             nuevoTexto = texto.substring(0, lastSpace + 1) + nuevaPalabra;
         }
-
+        //se actualiza el contenido del area de texto
         textArea.setText(nuevoTexto);
+        //se posiciona el cursos al final del texto
         textArea.setCaretPosition(nuevoTexto.length());
     }
 
+    //Se gestiona la seleccion de la sugerencia
     private void seleccionarSugerencia() {
+        //se obtiene la sugerencia seleccionada
         String seleccion = suggestionsList.getSelectedValue();
-
+        //si es una seleccion valida, se reemplaza
         if (seleccion != null) {
             reemplazarUltimaPalabra(seleccion);
+            //se oculta el popup despues de la seleccion
             suggestionsPopup.setVisible(false);
         }
     }
