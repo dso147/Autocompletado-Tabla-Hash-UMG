@@ -24,7 +24,7 @@ public class EditorUI extends JFrame {
     private SuggestionEngine suggestionEngine;
 
     private Timer debounceTimer;
-    
+
     //CAMBIOS PARA NAVEGACION TAB !!!!!
     private JPopupMenu suggestionsPopup;
     private JList<String> suggestionsList;
@@ -61,6 +61,7 @@ public class EditorUI extends JFrame {
         textArea.setLineWrap(true); // salto de línea automático
         textArea.setWrapStyleWord(true); // para corta por palabra y no por letra
         textArea.setMargin(new Insets(15, 15, 15, 15)); // padding interno de área de texto
+        textArea.setFocusTraversalKeysEnabled(false); // MEJORA-TAB: Desactiva la navegación por foco con TAB, permitiendo capturar la tecla para navegación de sugerencias
 
         // Scroll para el área de texto
         JScrollPane scrollPane = new JScrollPane(textArea);
@@ -107,7 +108,7 @@ public class EditorUI extends JFrame {
                 updateTextStatusLabel("Actualizando...");
             }
         });
-        
+
         //CAMBIOS PARA EL TAB
         listModel = new DefaultListModel<>();
         suggestionsList = new JList<>(listModel);
@@ -117,24 +118,57 @@ public class EditorUI extends JFrame {
         suggestionsPopup = new JPopupMenu();
         suggestionsPopup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         suggestionsPopup.add(new JScrollPane(suggestionsList));
-        
+
         // ATAJOS DE TECLADO
-        textArea.getInputMap().put(KeyStroke.getKeyStroke("TAB"), "nextSuggestion");
-        textArea.getActionMap().put("nextSuggestion", new AbstractAction() {
+
+        // MEJORA-TAB: Se usa WHEN_FOCUSED para asegurar que los atajos solo funcionen cuando el textArea tiene el foco
+        // Evita conflictos con otros componentes o con el sistema de navegación por defecto de Swing
+        InputMap inputMap = textArea.getInputMap(JComponent.WHEN_FOCUSED);
+        // MEJORA-TAB: Separar InputMap y ActionMap permite un control más claro de eventos de teclado
+        ActionMap actionMap = textArea.getActionMap();
+
+        // MEJORA-TAB: Se reemplaza el uso de "TAB" string por KeyEvent.VK_TAB para mayor precisión y compatibilidad
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), "nextSuggestion");
+
+        actionMap.put("nextSuggestion", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
+                // MEJORA-TAB: Se evita ejecutar navegación si el popup no está visible o no hay sugerencias
+                // Previene errores y comportamientos inesperados
+                if (!suggestionsPopup.isVisible() || listModel.isEmpty()) {
+                    return;
+                }
+
                 int index = suggestionsList.getSelectedIndex();
+
                 if (index < listModel.size() - 1) {
                     suggestionsList.setSelectedIndex(index + 1);
+                } else {
+                    // MEJORA-TAB: Navegación circular, cuando llega al final vuelve al inicio
+                    suggestionsList.setSelectedIndex(0);
                 }
+
+                // MEJORA-TAB: Asegura que el elemento seleccionado siempre sea visible dentro del
+                // scroll del popup, mejorando la experiencia de usuario al navegar por sugerencias largas
+                suggestionsList.ensureIndexIsVisible(suggestionsList.getSelectedIndex());
             }
         });
 
-        textArea.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "chooseSuggestion");
-        textArea.getActionMap().put("chooseSuggestion", new AbstractAction() {
+        // MEJORA-TAB: Uso explícito de KeyEvent para evitar conflictos con acciones por defecto de JTextArea
+        // similar a la implementación de arriba.
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "chooseSuggestion");
+        actionMap.put("chooseSuggestion", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                seleccionarSugerencia();
+                // MEJORA-TAB: Solo selecciona sugerencia si el popup está activo
+                if (suggestionsPopup.isVisible() && !listModel.isEmpty()) {
+                    seleccionarSugerencia(); // esto no se toco, pero se asegura que funcione en el evento correcto
+                } else {
+                    // MEJORA-TAB: Se respeta el comportamiento natural del ENTER (salto de línea)
+                    // cuando no hay sugerencias activas.
+                    textArea.append("\n");
+                }
             }
         });
 
@@ -145,7 +179,7 @@ public class EditorUI extends JFrame {
                 seleccionarSugerencia();
             }
         });
-        
+
     }
 
     private void updateTextStatusLabel(String mensaje) {
@@ -164,47 +198,30 @@ public class EditorUI extends JFrame {
 
         if (ultimaPalabra.isEmpty()) {
             statusLabel.setText("Escribe una palabra...");
+            // MEJORA-TAB: Se asegura ocultar el popup cuando no hay palabra válida.
+            suggestionsPopup.setVisible(false);
             return;
         }
 
         boolean palabraCorrecta = spellChecker.isCorrect(ultimaPalabra);
-        
+
         if (!palabraCorrecta) {
             java.util.List<String> sugerencias = suggestionEngine.getSuggestions(ultimaPalabra);
 
             if (!sugerencias.isEmpty()) {
+                statusLabel.setText("Sugerencias para: " + ultimaPalabra); //MEJORA-TAB: Solo se agrega la alerta, no hace nada realmente.
                 mostrarPopup(sugerencias);
             } else {
+                statusLabel.setText("No se encontraron sugerencias para: " + ultimaPalabra); //MEJORA-TAB: Solo se agrega la alerta, no hace nada realmente.
                 suggestionsPopup.setVisible(false);
             }
         } else {
+            statusLabel.setText("Palabra correcta: " + ultimaPalabra);
             suggestionsPopup.setVisible(false);
+
+            //MEJORA-TAB: Se elimina el codigo que se habia descomentado, aunque no generara conflictos de funcionamiento
+            //ya no pertenecia al flujo implementado.
         }
-
-                    if (palabraCorrecta) {
-                statusLabel.setText("Palabra correcta: " + ultimaPalabra);
-            } else {
-                java.util.List<String> sugerencias = suggestionEngine.getSuggestions(ultimaPalabra);
-
-                System.out.println("Sugerencias: " + sugerencias);
-
-                // Esta parte no afecto la actualización de texto, solo fue demo.
-
-                if (sugerencias.isEmpty()) {
-                    statusLabel.setText("No se encontraron sugerencias para: " + ultimaPalabra);
-                } else {
-                    for (String sugerencia : sugerencias) {
-                        JButton botonSugerencia = new JButton(sugerencia);
-                        botonSugerencia.setFocusPainted(false);
-
-                        botonSugerencia.addActionListener(e -> {
-                            statusLabel.setText("Seleccionaste: " + sugerencia);
-                        });
-
-                        suggestionsPanel.add(botonSugerencia);
-                    }
-                }
-            }
 
         suggestionsPanel.revalidate();
         suggestionsPanel.repaint();
@@ -236,11 +253,19 @@ public class EditorUI extends JFrame {
             listModel.addElement(s);
         }
 
-        suggestionsList.setSelectedIndex(0);
+        // MEJORA-TAB: Selección automática del primer elemento,
+        // necesaria para que TAB funcione desde la primera interacción.
+        if (!listModel.isEmpty()) {
+            suggestionsList.setSelectedIndex(0);
+        }
 
         try {
             Rectangle caret = textArea.modelToView(textArea.getCaretPosition());
             suggestionsPopup.show(textArea, caret.x, caret.y + 20);
+
+            // MEJORA-TAB: Fuerza el foco de regreso al JTextArea después de mostrar el popup,
+            // evitando que TAB o ENTER dejen de funcionar por pérdida de foco.
+            textArea.requestFocusInWindow();
         } catch (Exception e) {
             suggestionsPopup.setVisible(false);
         }
@@ -266,7 +291,7 @@ public class EditorUI extends JFrame {
     }
 
     private void seleccionarSugerencia() {
-    String seleccion = suggestionsList.getSelectedValue();
+        String seleccion = suggestionsList.getSelectedValue();
 
         if (seleccion != null) {
             reemplazarUltimaPalabra(seleccion);
