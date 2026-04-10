@@ -74,12 +74,12 @@ public class EditorUI extends JFrame {
         // Panel inferior que contiene estado y sugerencias
         JPanel bottomPanel = new JPanel(new BorderLayout(8, 8));
         bottomPanel.add(statusLabel, BorderLayout.NORTH);
-        bottomPanel.add(suggestionsPanel, BorderLayout.CENTER);
+        //bottomPanel.add(suggestionsPanel, BorderLayout.CENTER);
 
         mainPanel.add(bottomPanel, BorderLayout.SOUTH); // Se agrega al panel principal la sección de sugerencias y estado
 
         // procesamiento de palabra con debounce para evitar procesar cada letra escrita, se espera a que el usuario deje de escribir por 300ms
-        debounceTimer = new Timer(500, e -> procesarTextoUsuario());
+        debounceTimer = new Timer(300, e -> procesarTextoUsuario());
         debounceTimer.setRepeats(false);
 
         // Evento para detectar cambios en el texto, va a simular el estado de escritura del usuario
@@ -127,9 +127,11 @@ public class EditorUI extends JFrame {
         if (palabraCorrecta) {
             statusLabel.setText("Palabra correcta: " + ultimaPalabra);
         } else {
-            statusLabel.setText("Palabra no encontrada: " + ultimaPalabra);
-
             java.util.List<String> sugerencias = suggestionEngine.getSuggestions(ultimaPalabra);
+
+            System.out.println("Sugerencias: " + sugerencias);
+
+            /* Esta parte no afecto la actualización de texto, solo fue demo.
 
             if (sugerencias.isEmpty()) {
                 statusLabel.setText("No se encontraron sugerencias para: " + ultimaPalabra);
@@ -144,7 +146,7 @@ public class EditorUI extends JFrame {
 
                     suggestionsPanel.add(botonSugerencia);
                 }
-            }
+            }*/
         }
 
         suggestionsPanel.revalidate();
