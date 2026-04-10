@@ -7,6 +7,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.*;
 
 public class EditorUI extends JFrame {
 
@@ -23,6 +24,11 @@ public class EditorUI extends JFrame {
     private SuggestionEngine suggestionEngine;
 
     private Timer debounceTimer;
+    
+    //CAMBIOS PARA NAVEGACION TAB !!!!!
+    private JPopupMenu suggestionsPopup;
+    private JList<String> suggestionsList;
+    private DefaultListModel<String> listModel;
 
     public EditorUI(SpellChecker spellChecker, SuggestionEngine suggestionEngine) {
         this.spellChecker = spellChecker;
@@ -74,7 +80,7 @@ public class EditorUI extends JFrame {
         // Panel inferior que contiene estado y sugerencias
         JPanel bottomPanel = new JPanel(new BorderLayout(8, 8));
         bottomPanel.add(statusLabel, BorderLayout.NORTH);
-        //bottomPanel.add(suggestionsPanel, BorderLayout.CENTER);
+        //--------- bottomPanel.add(suggestionsPanel, BorderLayout.CENTER);
 
         mainPanel.add(bottomPanel, BorderLayout.SOUTH); // Se agrega al panel principal la sección de sugerencias y estado
 
@@ -101,6 +107,45 @@ public class EditorUI extends JFrame {
                 updateTextStatusLabel("Actualizando...");
             }
         });
+        
+        //CAMBIOS PARA EL TAB
+        listModel = new DefaultListModel<>();
+        suggestionsList = new JList<>(listModel);
+        suggestionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        suggestionsList.setFont(new Font("SansSerif", Font.PLAIN, 16));
+
+        suggestionsPopup = new JPopupMenu();
+        suggestionsPopup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        suggestionsPopup.add(new JScrollPane(suggestionsList));
+        
+        // ATAJOS DE TECLADO
+        textArea.getInputMap().put(KeyStroke.getKeyStroke("TAB"), "nextSuggestion");
+        textArea.getActionMap().put("nextSuggestion", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int index = suggestionsList.getSelectedIndex();
+                if (index < listModel.size() - 1) {
+                    suggestionsList.setSelectedIndex(index + 1);
+                }
+            }
+        });
+
+        textArea.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "chooseSuggestion");
+        textArea.getActionMap().put("chooseSuggestion", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                seleccionarSugerencia();
+            }
+        });
+
+        // CLICK CON MOUSE
+        suggestionsList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                seleccionarSugerencia();
+            }
+        });
+        
     }
 
     private void updateTextStatusLabel(String mensaje) {
@@ -115,7 +160,7 @@ public class EditorUI extends JFrame {
         System.out.println("Texto: " + texto);
         System.out.println("Palabra: " + ultimaPalabra);
 
-        limpiarSugerencias();
+        //limpiarSugerencias();
 
         if (ultimaPalabra.isEmpty()) {
             statusLabel.setText("Escribe una palabra...");
@@ -123,31 +168,43 @@ public class EditorUI extends JFrame {
         }
 
         boolean palabraCorrecta = spellChecker.isCorrect(ultimaPalabra);
-
-        if (palabraCorrecta) {
-            statusLabel.setText("Palabra correcta: " + ultimaPalabra);
-        } else {
+        
+        if (!palabraCorrecta) {
             java.util.List<String> sugerencias = suggestionEngine.getSuggestions(ultimaPalabra);
 
-            System.out.println("Sugerencias: " + sugerencias);
-
-            /* Esta parte no afecto la actualización de texto, solo fue demo.
-
-            if (sugerencias.isEmpty()) {
-                statusLabel.setText("No se encontraron sugerencias para: " + ultimaPalabra);
+            if (!sugerencias.isEmpty()) {
+                mostrarPopup(sugerencias);
             } else {
-                for (String sugerencia : sugerencias) {
-                    JButton botonSugerencia = new JButton(sugerencia);
-                    botonSugerencia.setFocusPainted(false);
-
-                    botonSugerencia.addActionListener(e -> {
-                        statusLabel.setText("Seleccionaste: " + sugerencia);
-                    });
-
-                    suggestionsPanel.add(botonSugerencia);
-                }
-            }*/
+                suggestionsPopup.setVisible(false);
+            }
+        } else {
+            suggestionsPopup.setVisible(false);
         }
+
+                    if (palabraCorrecta) {
+                statusLabel.setText("Palabra correcta: " + ultimaPalabra);
+            } else {
+                java.util.List<String> sugerencias = suggestionEngine.getSuggestions(ultimaPalabra);
+
+                System.out.println("Sugerencias: " + sugerencias);
+
+                // Esta parte no afecto la actualización de texto, solo fue demo.
+
+                if (sugerencias.isEmpty()) {
+                    statusLabel.setText("No se encontraron sugerencias para: " + ultimaPalabra);
+                } else {
+                    for (String sugerencia : sugerencias) {
+                        JButton botonSugerencia = new JButton(sugerencia);
+                        botonSugerencia.setFocusPainted(false);
+
+                        botonSugerencia.addActionListener(e -> {
+                            statusLabel.setText("Seleccionaste: " + sugerencia);
+                        });
+
+                        suggestionsPanel.add(botonSugerencia);
+                    }
+                }
+            }
 
         suggestionsPanel.revalidate();
         suggestionsPanel.repaint();
@@ -169,4 +226,52 @@ public class EditorUI extends JFrame {
         suggestionsPanel.revalidate();
         suggestionsPanel.repaint();
     }
+
+    //CAMBIOS PARA EL TAB
+
+    private void mostrarPopup(java.util.List<String> sugerencias) {
+        listModel.clear();
+
+        for (String s : sugerencias) {
+            listModel.addElement(s);
+        }
+
+        suggestionsList.setSelectedIndex(0);
+
+        try {
+            Rectangle caret = textArea.modelToView(textArea.getCaretPosition());
+            suggestionsPopup.show(textArea, caret.x, caret.y + 20);
+        } catch (Exception e) {
+            suggestionsPopup.setVisible(false);
+        }
+    }
+
+    private void reemplazarUltimaPalabra(String nuevaPalabra) {
+        String texto = textArea.getText();
+
+        if (texto.trim().isEmpty()) return;
+
+        int lastSpace = texto.lastIndexOf(" ");
+
+        String nuevoTexto;
+
+        if (lastSpace == -1) {
+            nuevoTexto = nuevaPalabra;
+        } else {
+            nuevoTexto = texto.substring(0, lastSpace + 1) + nuevaPalabra;
+        }
+
+        textArea.setText(nuevoTexto);
+        textArea.setCaretPosition(nuevoTexto.length());
+    }
+
+    private void seleccionarSugerencia() {
+    String seleccion = suggestionsList.getSelectedValue();
+
+        if (seleccion != null) {
+            reemplazarUltimaPalabra(seleccion);
+            suggestionsPopup.setVisible(false);
+        }
+    }
+
 }

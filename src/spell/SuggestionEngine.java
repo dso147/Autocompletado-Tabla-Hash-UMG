@@ -10,7 +10,7 @@ import java.util.Set;
 public class SuggestionEngine {
 
     // Cantidad máxima de sugerencias que se devolverán al usuario.
-    private static final int MAX_SUGGESTIONS = 10;
+    private static final int MAX_SUGGESTIONS = 5;
 
     // Referencia al diccionario cargado en memoria.
     // verificar O(1) si una palabra existe o no.
@@ -37,6 +37,7 @@ public class SuggestionEngine {
 
         // Si existe en diccionario no hace nada más
         if (diccionario.containsKey(word)) {
+            System.out.println("Palabra correcta");
             return new ArrayList<>();
         }
 
