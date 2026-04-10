@@ -12,7 +12,7 @@ public class Main {
         diccionario.cargaDiccionario();
 
         SpellChecker spellChecker = new SpellChecker(diccionario);
-        SuggestionEngine suggestionEngine = new SuggestionEngine(spellChecker, diccionario);
+        SuggestionEngine suggestionEngine = new SuggestionEngine(diccionario);
 
         SwingUtilities.invokeLater(() -> {
             EditorUI ui = new EditorUI(spellChecker, suggestionEngine);
