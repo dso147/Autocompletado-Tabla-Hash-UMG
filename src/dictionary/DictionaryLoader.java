@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Set;
 
 public class DictionaryLoader {
 
@@ -42,5 +43,12 @@ public class DictionaryLoader {
             throw new IllegalStateException("El diccionario no ha sido cargado. Llama a cargaDiccionario() primero.");
         }
         return diccionario.containsKey(palabra.trim().toLowerCase());
+    }
+
+    public Set<String> getAllWords() {
+        if (diccionario == null) {
+            throw new IllegalStateException("El diccionario no ha sido cargado.");
+        }
+        return diccionario.keySet();
     }
 }

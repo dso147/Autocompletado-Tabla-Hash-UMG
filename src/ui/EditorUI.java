@@ -211,9 +211,10 @@ public class EditorUI extends JFrame {
             return;
         }
 
-        boolean palabraCorrecta = spellChecker.isCorrect(ultimaPalabra);
+        //ya no se valida para que siempre genere sugerencias
+        //boolean palabraCorrecta = spellChecker.isCorrect(ultimaPalabra);
         //Si la palabra no es correcta segun el diccionario
-        if (!palabraCorrecta) {
+        //if (!palabraCorrecta) {
             //se obtienen las sugerencias
             java.util.List<String> sugerencias = suggestionEngine.getSuggestions(ultimaPalabra);
             //si existen sugerencuas, se muestran en el popup
@@ -226,13 +227,13 @@ public class EditorUI extends JFrame {
                 suggestionsPopup.setVisible(false);
             }
             //si la palabra es correcta, se oculta el popup
-        } else {
+        /*} else {
             statusLabel.setText("Palabra correcta: " + ultimaPalabra);
             suggestionsPopup.setVisible(false);
 
             //MEJORA-TAB: Se elimina el codigo que se habia descomentado, aunque no generara conflictos de funcionamiento
             //ya no pertenecia al flujo implementado.
-        }
+        }*/
 
         suggestionsPanel.revalidate();
         suggestionsPanel.repaint();

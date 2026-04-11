@@ -11,6 +11,7 @@ public class SuggestionEngine {
 
     // Cantidad máxima de sugerencias que se devolverán al usuario.
     private static final int MAX_SUGGESTIONS = 5;
+    private static final int MAX_WORD_LENGTH= 20;
 
     // Referencia al diccionario cargado en memoria.
     // verificar O(1) si una palabra existe o no.
@@ -44,21 +45,45 @@ public class SuggestionEngine {
         // Cuando se llenan las LinkedHashSet suggestions se retornan
 
         // Primero intenta generar sugerencias eliminando letras.
-        generateByDeletion(word, suggestions);
+        // con prefijos no funciona eliminacion
+        /*generateByDeletion(word, suggestions);
         if (isFull(suggestions)) {
             return toList(suggestions);
-        }
+        }*/
 
         // Generar sugerencias reemplazando letras.
-        generateByReplacement(word, suggestions);
+        // tampoco funciona con prefijos
+        /*generateByReplacement(word, suggestions);
         if (isFull(suggestions)) {
             return toList(suggestions);
-        }
+        }*/
 
         // Generar suerencias  insertando letras.
-        generateByInsertion(word, suggestions);
+        //generateByInsertion(word, suggestions);
+
+        generateByPrefix(word, suggestions);
 
         return toList(suggestions);
+    }
+
+    private void generateByPrefix(String word, Set<String> suggestions) {
+        if (word == null || word.trim().isEmpty()) {
+            return;
+        }
+
+        String prefix = word.toLowerCase().trim();
+
+        for (String candidate : diccionario.getAllWords()) {
+            if (isFull(suggestions)) {
+                return;
+            }
+
+            // Se agregan solo palabras que comiencen con el prefijo
+            // y no sean exactamente iguales a la palabra ingresada.
+            if (candidate.startsWith(prefix) && !candidate.equals(prefix)) {
+                suggestions.add(candidate);
+            }
+        }
     }
 
     /*
